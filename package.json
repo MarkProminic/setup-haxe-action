@@ -44,7 +44,13 @@
       "import/extensions": "off",
       "@typescript-eslint/object-curly-spacing": "off",
       "unicorn/no-array-method-this-argument": "off",
-      "unicorn/no-array-callback-reference": "off"
+      "unicorn/no-array-callback-reference": "off",
+      "unicorn/prevent-abbreviations": "off",
+      "@typescript-eslint/switch-exhaustiveness-check": "off",
+      "unicorn/prefer-string-replace-all": "off",
+      "n/file-extension-in-import": "off",
+      "@typescript-eslint/no-implicit-any-catch": "off",
+      "@typescript-eslint/no-unsafe-argument": "off"
     }
   }
 }
