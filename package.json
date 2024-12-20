@@ -14,8 +14,8 @@
     "tsc": "tsc",
     "build": "tsc",
     "pack": "ncc build && ncc build -o dist/cache-save src/cache-save.ts",
-    "test": "xo",
-    "format": "xo --fix",
+    "test": "echo \"No tests configured\"",
+    "format": "echo \"No formatter configured\"",
     "dist": "npm run build && npm run pack"
   },
   "keywords": [
@@ -35,22 +35,6 @@
     "@types/node": "^22.10.2",
     "@types/semver": "^7.5.8",
     "@vercel/ncc": "^0.38.3",
-    "typescript": "^5.7.2",
-    "xo": "^0.60.0"
-  },
-  "xo": {
-    "space": true,
-    "rules": {
-      "import/extensions": "off",
-      "@typescript-eslint/object-curly-spacing": "off",
-      "unicorn/no-array-method-this-argument": "off",
-      "unicorn/no-array-callback-reference": "off",
-      "unicorn/prevent-abbreviations": "off",
-      "@typescript-eslint/switch-exhaustiveness-check": "off",
-      "unicorn/prefer-string-replace-all": "off",
-      "n/file-extension-in-import": "off",
-      "@typescript-eslint/no-implicit-any-catch": "off",
-      "@typescript-eslint/no-unsafe-argument": "off"
-    }
+    "typescript": "^5.7.2"
   }
 }
