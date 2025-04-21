@@ -5,8 +5,6 @@
 
 import * as core from '@actions/core';
 import * as semver from 'semver';
-import * as http from 'node:http';
-import * as https from 'node:https';
 import { setup } from './setup';
 
 async function main(): Promise<void> {
@@ -17,13 +15,14 @@ async function main(): Promise<void> {
     const maxRetries = parseInt(core.getInput('max-retries') || '5', 10);
     const retryDelay = parseInt(core.getInput('retry-delay') || '5000', 10);
     
-    // Configure global HTTP/HTTPS timeouts
-    http.globalAgent.timeout = downloadTimeout;
-    https.globalAgent.timeout = downloadTimeout;
+    // Set environment variables for Node.js HTTP request timeouts
+    // These will be picked up by underlying HTTP request libraries
+    process.env.NODE_TLS_TIMEOUT = String(downloadTimeout);
+    process.env.HTTP_TIMEOUT = String(downloadTimeout);
     
-    core.debug(`Download timeout set to ${downloadTimeout}ms`);
-    core.debug(`Max retries set to ${maxRetries}`);
-    core.debug(`Initial retry delay set to ${retryDelay}ms`);
+    core.info(`Download timeout set to ${downloadTimeout}ms`);
+    core.info(`Max retries set to ${maxRetries}`);
+    core.info(`Initial retry delay set to ${retryDelay}ms`);
     
     const nightly = /^(\d{4}-\d{2}-\d{2}_[\w.-]+_\w+)|latest$/.test(inputVersion);
     const version = nightly ? inputVersion : semver.valid(semver.clean(inputVersion));
