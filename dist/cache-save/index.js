@@ -736,11 +736,11 @@ var ArchiveToolType;
 // The default number of retry attempts.
 exports.DefaultRetryAttempts = 2;
 // The default delay in milliseconds between retry attempts.
-exports.DefaultRetryDelay = 5000;
+exports.DefaultRetryDelay = 15000;
 // Socket timeout in milliseconds during download.  If no traffic is received
 // over the socket during this period, the socket is destroyed and the download
 // is aborted.
-exports.SocketTimeout = 5000;
+exports.SocketTimeout = 15000;
 // The default path of GNUtar on hosted Windows runners
 exports.GnuTarPathOnWindows = `${process.env['PROGRAMFILES']}\\Git\\usr\\bin\\tar.exe`;
 // The default path of BSDtar on hosted Windows runners
