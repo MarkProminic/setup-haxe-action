@@ -64,11 +64,13 @@ abstract class Asset {
     let lastError: Error | null = null;
     let currentDelay = this.retryDelay;
 
+    core.info(`Downloading: ${this.downloadUrl}`);
+
     while (attempt <= this.maxRetries) {
       try {
-        core.debug(`Download attempt ${attempt}/${this.maxRetries} for ${this.downloadUrl}`);
+        core.info(`Download attempt ${attempt}/${this.maxRetries} for ${this.downloadUrl}`);
         const downloadPath = await tc.downloadTool(this.downloadUrl);
-        core.debug(`Download successful on attempt ${attempt}`);
+        core.info(`Download successful on attempt ${attempt} for ${this.downloadUrl}`);
         
         const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
         const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
@@ -81,10 +83,10 @@ abstract class Asset {
         return toolRoot;
       } catch (error: any) {
         lastError = error;
-        core.warning(`Download attempt ${attempt} failed: ${error.message}`);
+        core.warning(`Download attempt ${attempt} failed for ${this.downloadUrl}: ${error.message}`);
         
         if (attempt < this.maxRetries) {
-          core.info(`Waiting ${currentDelay / 1000} seconds before trying again`);
+          core.info(`Waiting ${currentDelay / 1000} seconds before trying again to download ${this.downloadUrl}`);
           await new Promise(resolve => setTimeout(resolve, currentDelay));
           // Exponential backoff
           currentDelay = Math.min(currentDelay * 2, 60000); // Cap at 1 minute
