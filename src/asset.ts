@@ -13,7 +13,22 @@ import { exec } from '@actions/exec';
 export type AssetFileExt = '.zip' | '.tar.gz';
 
 abstract class Asset {
-  constructor(readonly name: string, readonly version: string, protected readonly env: Env) {}
+  protected readonly downloadTimeout: number;
+  protected readonly maxRetries: number;
+  protected readonly retryDelay: number;
+
+  constructor(
+    readonly name: string, 
+    readonly version: string, 
+    protected readonly env: Env,
+    downloadTimeout: number = 60000,
+    maxRetries: number = 5,
+    retryDelay: number = 5000
+  ) {
+    this.downloadTimeout = downloadTimeout;
+    this.maxRetries = maxRetries;
+    this.retryDelay = retryDelay;
+  }
 
   async setup() {
     const toolPath = tc.find(this.name, this.version);
@@ -45,16 +60,41 @@ abstract class Asset {
   }
 
   private async download() {
-    const downloadPath = await tc.downloadTool(this.downloadUrl);
-    const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
+    let attempt = 1;
+    let lastError: Error | null = null;
+    let currentDelay = this.retryDelay;
 
-    const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
-    if (!toolRoot) {
-      throw new Error(`tool directory not found: ${extractPath}`);
+    while (attempt <= this.maxRetries) {
+      try {
+        core.debug(`Download attempt ${attempt}/${this.maxRetries} for ${this.downloadUrl}`);
+        const downloadPath = await tc.downloadTool(this.downloadUrl);
+        core.debug(`Download successful on attempt ${attempt}`);
+        
+        const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
+        const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
+        
+        if (!toolRoot) {
+          throw new Error(`tool directory not found: ${extractPath}`);
+        }
+
+        core.debug(`found toolRoot: ${toolRoot}`);
+        return toolRoot;
+      } catch (error: any) {
+        lastError = error;
+        core.warning(`Download attempt ${attempt} failed: ${error.message}`);
+        
+        if (attempt < this.maxRetries) {
+          core.info(`Waiting ${currentDelay / 1000} seconds before trying again`);
+          await new Promise(resolve => setTimeout(resolve, currentDelay));
+          // Exponential backoff
+          currentDelay = Math.min(currentDelay * 2, 60000); // Cap at 1 minute
+        }
+        
+        attempt++;
+      }
     }
 
-    core.debug(`found toolRoot: ${toolRoot}`);
-    return toolRoot;
+    throw new Error(`Failed to download ${this.downloadUrl} after ${this.maxRetries} attempts: ${lastError?.message}`);
   }
 
   private async extract(file: string, dest: string, ext: AssetFileExt) {
@@ -104,13 +144,24 @@ abstract class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-osx-universal.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-win64.zip
 export class NekoAsset extends Asset {
-  static resolveFromHaxeVersion(version: string) {
+  static resolveFromHaxeVersion(
+    version: string, 
+    downloadTimeout?: number, 
+    maxRetries?: number, 
+    retryDelay?: number
+  ) {
     const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.4.0'; // Haxe 3 only supports neko 2.1
-    return new NekoAsset(nekoVer);
+    return new NekoAsset(nekoVer, new Env(), downloadTimeout, maxRetries, retryDelay);
   }
 
-  constructor(version: string, env = new Env()) {
-    super('neko', version, env);
+  constructor(
+    version: string, 
+    env = new Env(), 
+    downloadTimeout?: number, 
+    maxRetries?: number, 
+    retryDelay?: number
+  ) {
+    super('neko', version, env, downloadTimeout, maxRetries, retryDelay);
   }
 
   get downloadUrl() {
@@ -147,8 +198,15 @@ export class NekoAsset extends Asset {
 export class HaxeAsset extends Asset {
   nightly = false;
 
-  constructor(version: string, nightly: boolean, env = new Env()) {
-    super('haxe', version, env);
+  constructor(
+    version: string, 
+    nightly: boolean, 
+    env = new Env(),
+    downloadTimeout?: number, 
+    maxRetries?: number, 
+    retryDelay?: number
+  ) {
+    super('haxe', version, env, downloadTimeout, maxRetries, retryDelay);
     this.nightly = nightly;
   }
 

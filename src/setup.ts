@@ -11,14 +11,21 @@ import { restoreHaxelib, createHaxelibKey } from './haxelib';
 
 const env = new Env();
 
-export async function setup(version: string, nightly: boolean, cacheDependencyPath: string) {
-  const neko = NekoAsset.resolveFromHaxeVersion(version); // Haxelib requires Neko
+export async function setup(
+  version: string, 
+  nightly: boolean, 
+  cacheDependencyPath: string,
+  downloadTimeout: number = 60000,
+  maxRetries: number = 5,
+  retryDelay: number = 5000
+) {
+  const neko = NekoAsset.resolveFromHaxeVersion(version, downloadTimeout, maxRetries, retryDelay); // Haxelib requires Neko
   const nekoPath = await neko.setup();
   core.addPath(nekoPath);
   core.exportVariable('NEKOPATH', nekoPath);
   core.exportVariable('LD_LIBRARY_PATH', `${nekoPath}:$LD_LIBRARY_PATH`);
 
-  const haxe = new HaxeAsset(version, nightly);
+  const haxe = new HaxeAsset(version, nightly, new Env(), downloadTimeout, maxRetries, retryDelay);
   const haxePath = await haxe.setup();
   core.addPath(haxePath);
   core.exportVariable('HAXE_STD_PATH', path.join(haxePath, 'std'));

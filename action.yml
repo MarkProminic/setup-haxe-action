@@ -9,6 +9,18 @@ inputs:
   cache-dependency-path:
     description: 'Used to specify the path to a dependency file.'
     required: false
+  download-timeout:
+    description: 'Download timeout in milliseconds. Increase for slow networks or self-hosted runners.'
+    required: false
+    default: '60000'
+  max-retries:
+    description: 'Maximum number of download retry attempts before failing.'
+    required: false
+    default: '5'
+  retry-delay:
+    description: 'Initial retry delay in milliseconds (will increase exponentially with each retry).'
+    required: false
+    default: '5000'
 runs:
   using: 'node20'
   main: 'dist/index.js'

@@ -7,6 +7,25 @@ This action sets up a Haxe environment for use in your workflows.
 
 ## Usage
 
+### Download Timeout and Retry Settings
+
+For slow networks or self-hosted runners, you can configure download timeout and retry settings:
+
+```yaml
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: MarkProminic/setup-haxe-action@master
+        with:
+          haxe-version: 4.3.6
+          download-timeout: 120000  # 2 minutes (in milliseconds)
+          max-retries: 10           # Maximum number of retry attempts
+          retry-delay: 10000        # Initial retry delay in milliseconds (increases exponentially)
+```
+
+### Basic Usage
+
 See [action.yml](action.yml) and [.github/workflows/](.github/workflows/).
 
 Basic:
